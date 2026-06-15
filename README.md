@@ -12,8 +12,9 @@
 
 ### 网盘APK快速开始
 - **网盘链接** - 通过网盘快速下载APK文件安装，仅支持Android平台
-通过网盘分享的文件：app-3.0.apk
-链接: https://pan.baidu.com/s/1zHB4qTsLORK5cXzgBY2WJA 提取码: iqdh
+通过百度网盘分享的文件：app-v3.1…
+链接:https://pan.baidu.com/s/1U9MF-xfYHhG3EfqqYvI0rw?pwd=n6px 
+复制这段内容打开「百度网盘APP 即可获取」
 
 ### 核心功能
 - **实时估值** - 秒级刷新基金实时估值数据
