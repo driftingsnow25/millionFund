@@ -31,6 +31,12 @@ const router = createRouter({
       meta: { title: '基金详情' }
     },
     {
+      path: '/market',
+      name: 'market',
+      component: () => import('@/views/Market.vue'),
+      meta: { title: '市场指数' }
+    },
+    {
       path: '/ai-tracking',
       name: 'ai-tracking',
       component: () => import('@/views/AITracking.vue'),
