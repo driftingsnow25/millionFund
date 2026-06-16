@@ -7,6 +7,7 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useHoldingStore } from '@/stores/holding'
 import { useAITrackingStore } from '@/stores/aiTracking'
+import { useThemeStore } from '@/stores/theme'
 import { searchFund, fetchFundEstimate } from '@/api/fund'
 import { fetchLatestNetValue } from '@/api/fundFast'
 import { showConfirmDialog, showToast, showLoadingToast, closeToast } from 'vant'
@@ -21,6 +22,7 @@ import downW from '@/assets/downW.jpg'
 const router = useRouter()
 const holdingStore = useHoldingStore()
 const aiTrackingStore = useAITrackingStore()
+const themeStore = useThemeStore()
 
 // ========== 表单相关 ==========
 const showAddDialog = ref(false)
@@ -157,6 +159,12 @@ const groupedHoldings = computed(() => {
 // [WHAT] 排序持仓基金
 function handleSort(direction: 'up' | 'down' | 'none') {
   sortDirection.value = direction
+}
+
+// [WHAT] 切换主题
+function toggleTheme() {
+  themeStore.toggleTheme()
+  showToast(themeStore.actualTheme === 'dark' ? '已切换到深色主题' : '已切换到浅色主题')
 }
 
 // [WHAT] 下拉刷新
@@ -709,17 +717,28 @@ async function refreshHoldings() {
   <div class="holding-page">
     <!-- 顶部导航栏 -->
     <div class="custom-nav-bar">
-      <div class="nav-title">我的持仓</div>
-      <div class="nav-actions">
-        <!-- 网页端按钮 -->
-        <div class="web-actions web-only">
-          <van-icon name="replay" size="20" @click="refreshHoldings" class="refresh-icon" />
-          <van-button size="small" @click="openBatchDialog" class="nav-btn">批量</van-button>
-          <van-button size="small" @click="backupHoldings" class="nav-btn">备份</van-button>
-          <van-button size="small" @click="restoreHoldings" class="nav-btn">恢复</van-button>
+      <!-- 第一行：标题 -->
+      <div class="nav-title-row">
+        <div class="nav-title">我的持仓</div>
+      </div>
+      <!-- 第二行：按钮 -->
+      <div class="nav-actions-row">
+        <!-- 移动端主题切换按钮 - 最左侧 -->
+        <div class="theme-toggle theme-btn-mobile mobile-only">
+          <span 
+            class="theme-toggle-btn" 
+            :class="{ active: themeStore.actualTheme === 'light' }"
+            @click="themeStore.setTheme('light')"
+          >浅</span>
+          <span 
+            class="theme-toggle-btn" 
+            :class="{ active: themeStore.actualTheme === 'dark' }"
+            @click="themeStore.setTheme('dark')"
+          >深</span>
         </div>
-        
-        <!-- 移动端按钮 -->
+        <!-- 占位 - 左侧空间 -->
+        <div class="mobile-only" style="flex: 1;"></div>
+        <!-- 移动端其他按钮 - 最右侧 -->
         <div class="mobile-actions mobile-only">
           <img 
             :src="riseW" 
@@ -738,6 +757,26 @@ async function refreshHoldings() {
           <van-button size="small" @click="openBatchDialog">批量</van-button>
           <van-button size="small" @click="restoreHoldings">恢复</van-button>
         </div>
+      </div>
+      <!-- 网页端按钮行 -->
+      <div class="nav-actions web-only">
+        <!-- 网页端主题切换按钮 -->
+        <div class="theme-toggle theme-btn-web">
+          <span 
+            class="theme-toggle-btn" 
+            :class="{ active: themeStore.actualTheme === 'light' }"
+            @click="themeStore.setTheme('light')"
+          >浅</span>
+          <span 
+            class="theme-toggle-btn" 
+            :class="{ active: themeStore.actualTheme === 'dark' }"
+            @click="themeStore.setTheme('dark')"
+          >深</span>
+        </div>
+        <van-icon name="replay" size="20" @click="refreshHoldings" class="refresh-icon" />
+        <van-button size="small" @click="openBatchDialog" class="nav-btn">批量</van-button>
+        <van-button size="small" @click="backupHoldings" class="nav-btn">备份</van-button>
+        <van-button size="small" @click="restoreHoldings" class="nav-btn">恢复</van-button>
       </div>
     </div>
 
@@ -1252,6 +1291,51 @@ async function refreshHoldings() {
   color: var(--text-primary);
 }
 
+/* 主题切换按钮 - 参考简/全按钮样式 */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  background: var(--bg-primary);
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid var(--border-light);
+}
+
+.theme-btn-web {
+  margin-right: 8px;
+}
+
+.theme-btn-mobile {
+  margin-left: 12px;
+}
+
+.theme-toggle-btn {
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.theme-toggle-btn.active {
+  background: var(--primary-color);
+  color: #fff;
+  font-weight: 600;
+}
+
+.theme-toggle-btn:hover:not(.active) {
+  color: var(--text-primary);
+}
+
+/* 移动端标题行布局 */
+.nav-title-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  justify-content: center;
+}
+
 .nav-btn {
   font-size: 13px !important;
   padding: 6px 12px !important;
@@ -1281,10 +1365,18 @@ async function refreshHoldings() {
 @media (max-width: 767px) {
   .custom-nav-bar {
     flex-direction: column;
-    align-items: center;
-    gap: 10px;
+    align-items: stretch;
+    gap: 8px;
     padding: 10px 16px;
     padding-top: max(10px, env(safe-area-inset-top, 0px));
+  }
+  
+  .nav-title-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
   }
   
   .nav-title {
@@ -1292,25 +1384,42 @@ async function refreshHoldings() {
     font-weight: 700;
   }
   
-  .nav-actions {
-    width: 100%;
+  /* 第二行按钮容器 */
+  .nav-actions-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
     justify-content: space-between;
+    width: 100%;
+  }
+  
+  /* 移动端主题按钮位置 */
+  .theme-btn-mobile {
+    margin-left: 0;
+  }
+  
+  /* 隐藏网页端按钮行 */
+  .nav-actions.web-only {
+    display: none !important;
   }
   
   .mobile-actions {
-    width: 100%;
-    justify-content: flex-end;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
     gap: 8px;
+    width: auto;
+    justify-content: flex-end;
   }
   
   /* 移动端：隐藏网页端按钮 */
   .web-only {
-    display: none;
+    display: none !important;
   }
   
   /* 移动端：显示移动端按钮 */
   .mobile-only {
-    display: flex;
+    display: flex !important;
     align-items: center;
     gap: 8px;
   }

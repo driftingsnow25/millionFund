@@ -84,6 +84,7 @@
           <div class="record-header">
             <span class="record-date">{{ formatDate(record.date) }}</span>
             <span class="record-status" :class="getStatusClass(record)">{{ getStatusText(record) }}</span>
+            <span class="record-diff" :class="getStatusClass(record)">{{ getDiffText(record) }}</span>
             <span class="record-calc" v-html="getCalcProcessCombined(record)"></span>
           </div>
           <div class="record-content">
@@ -610,6 +611,20 @@ function getStatusText(record: AITrackingRecord): string {
   return buyChange >= sellChange ? '调仓成功' : '调仓失败'
 }
 
+// [WHAT] 计算买入涨幅 - 卖出涨幅的差值
+function getDiffText(record: AITrackingRecord): string {
+  const sellPrice = fundPrices.value[record.sellCode]
+  const buyPrice = fundPrices.value[record.buyCode]
+  
+  if (!sellPrice || !buyPrice || !record.sellNav || !record.buyNav) return '--'
+  
+  const sellChange = ((sellPrice - record.sellNav) / record.sellNav) * 100
+  const buyChange = ((buyPrice - record.buyNav) / record.buyNav) * 100
+  
+  const diff = buyChange - sellChange
+  return `${diff >= 0 ? '+' : ''}${diff.toFixed(2)}%`
+}
+
 // 拖拽排序相关函数
 function handleDragStart(event: DragEvent, index: number) {
   if (uiMode.value !== 'simple') return
@@ -1005,6 +1020,25 @@ onUnmounted(() => {
 .record-status {
   font-size: 12px;
   font-weight: 500;
+}
+
+.record-diff {
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-number);
+  min-width: 50px;
+}
+
+.record-diff.success {
+  color: #ee0a24;
+}
+
+.record-diff.fail {
+  color: #07c160;
+}
+
+.record-diff.pending {
+  color: #999;
 }
 
 .record-calc {
