@@ -806,7 +806,7 @@ function goToDetail(code: string) {
         <div class="overview-buttons mobile-only">
           <div class="sort-buttons">
             <div 
-              class="sort-icon-button"
+              class="sort-icon-button sort-up"
               :class="{ active: sortDirection === 'up' }"
               @click="handleSort('up')"
             >
@@ -817,7 +817,7 @@ function goToDetail(code: string) {
               />
             </div>
             <div 
-              class="sort-icon-button"
+              class="sort-icon-button sort-down"
               :class="{ active: sortDirection === 'down' }"
               @click="handleSort('down')"
             >
@@ -1235,7 +1235,7 @@ function goToDetail(code: string) {
   gap: 12px;
   padding: 10px 16px;
   padding-top: calc(10px + env(safe-area-inset-top, 0px));
-  background: linear-gradient(180deg, var(--bg-secondary) 0%, rgba(22, 27, 34, 0.95) 100%);
+  background: var(--bg-secondary);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   position: sticky;
@@ -1773,27 +1773,26 @@ function goToDetail(code: string) {
     gap: 8px;
   }
   
-  /* 移动端：小图标按钮样式 */
+  /* 移动端：小图标按钮样式 - 与持仓页面保持一致 */
   .sort-icon-button {
     width: 28px;
     height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    border-radius: 50%;
     cursor: pointer;
     transition: all 0.2s;
+    opacity: 0.6;
+    border-radius: 4px;
   }
   
   .sort-icon-button.active {
-    background: linear-gradient(180deg, #0ea5e9, #22d3ee);
-    border-color: transparent;
+    opacity: 1;
+    background: rgba(59, 130, 246, 0.1);
   }
   
   .sort-icon-button:active {
-    background: var(--bg-active);
+    opacity: 0.8;
   }
   
   .sort-icon {

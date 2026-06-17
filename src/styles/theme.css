@@ -145,6 +145,31 @@
 }
 
 
+/* ========== 浅色主题：Detail 页面顶部区域 ========== */
+
+[data-theme="light"] .detail-page .top-header,
+[data-theme="light"] .detail-page .nav-bar {
+    background: var(--bg-primary) !important;
+}
+
+
+/* ========== 浅色主题：van-nav-bar 导航栏 ========== */
+
+[data-theme="light"] .van-nav-bar {
+    background: var(--bg-primary) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+[data-theme="light"] .van-nav-bar__title,
+[data-theme="light"] .van-nav-bar__text {
+    color: var(--text-primary) !important;
+}
+
+[data-theme="light"] .van-nav-bar .van-icon {
+    color: var(--text-primary) !important;
+}
+
+
 /* ========== 浅色主题：TabBar 底部导航 ========== */
 
 [data-theme="light"] .van-tabbar {
@@ -173,6 +198,7 @@
 
 
 /* 浅色主题：开关组件选中状态为蓝色 */
+
 [data-theme="light"] .van-switch--on {
     background: var(--primary-color) !important;
 }

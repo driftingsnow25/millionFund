@@ -29,11 +29,6 @@
         <span class="stat-divider">|</span>
         <span class="stat-item"><label>累计</label><span class="value" :class="totalChangeClass">{{ totalChangeText }}</span></span>
       </div>
-      <!-- 网页端统计 -->
-      <div class="header-stats web-only" v-if="records.length > 0">
-        <span class="success-rate">调仓成功率({{ successRate }}%)</span>
-        <span class="total-change" :class="totalChangeClass">累计{{ totalChangeText }}</span>
-      </div>
     </div>
 
     <div class="records-list" v-if="records.length > 0">
@@ -826,43 +821,6 @@ onUnmounted(() => {
 
 .stat-item .down {
   color: var(--color-down);
-}
-
-/* 网页端统计 */
-.header-stats {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.success-rate-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  margin-left: 16px;
-}
-
-.success-rate {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
-.total-change {
-  font-size: 14px;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-
-.total-change.up {
-  color: var(--color-up);
-  background: var(--color-up-bg);
-}
-
-.total-change.down {
-  color: var(--color-down);
-  background: var(--color-down-bg);
 }
 
 .header-actions {

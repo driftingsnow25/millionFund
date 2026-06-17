@@ -212,7 +212,6 @@ onMounted(() => {
             v-for="sector in sectors" 
             :key="sector.code || sector.name"
             class="sector-item"
-            @click="goToSector(sector)"
           >
             <div class="sector-info">
               <div class="sector-name">{{ sector.name }}</div>
