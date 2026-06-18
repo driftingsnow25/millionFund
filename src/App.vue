@@ -107,10 +107,13 @@ function goToAITracking() {
     </div> -->
 
     <!-- 路由视图 -->
-    <!-- [WHY] 暂时禁用 keep-alive 避免页面缓存混乱 -->
-    <!-- [WHY] 包装容器确保页面撑满剩余空间，正确处理 Android 滚动 -->
+    <!-- [WHY] 使用 keep-alive 缓存指定页面，避免重复加载 -->
     <div class="page-wrapper">
-      <router-view />
+      <router-view v-slot="{ Component }">
+        <keep-alive include="ai-tracking">
+          <component :is="Component" />
+        </keep-alive>
+      </router-view>
     </div>
 
     <!-- 底部导航栏 -->

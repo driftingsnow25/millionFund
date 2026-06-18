@@ -9,12 +9,12 @@
             <span 
               class="ui-mode-btn" 
               :class="{ active: uiMode === 'simple' }"
-              @click="uiMode = 'simple'"
+              @click="setUiMode('simple')"
             >简</span>
             <span 
               class="ui-mode-btn" 
               :class="{ active: uiMode === 'full' }"
-              @click="uiMode = 'full'"
+              @click="setUiMode('full')"
             >全</span>
           </div>
           <!-- 拖拽模式按钮 - 仅简版UI显示 -->
@@ -26,6 +26,7 @@
             @click="toggleDragMode" 
           />
           <van-icon name="replay" size="20" @click="refreshPrices" />
+          <van-icon name="refresh" size="20" @click="reloadRecords" />
           <van-button size="small" type="primary" @click="showAddModal = true">
             <van-icon name="plus" /> 添加
           </van-button>
@@ -106,14 +107,16 @@
               <div class="fund-info">
                 <div class="fund-name">{{ record.sellName || record.sellCode }}</div>
                 <div class="fund-row">
-                  <span class="fund-code">{{ record.sellCode }}</span>
-                  <span class="fund-change-mobile" :class="getChangeClass(record, 'sell')">
+                  <div class="fund-left">
+                    <span class="fund-code">{{ record.sellCode }}</span>
+                    <span class="fund-day-change" :class="getDayChangeClass(record, 'sell')">
+                      {{ getDayChangeText(record, 'sell') }}
+                    </span>
+                  </div>
+                  <div class="fund-change-right" :class="getChangeClass(record, 'sell')">
                     {{ getChangeText(record, 'sell') }}
-                  </span>
+                  </div>
                 </div>
-              </div>
-              <div class="fund-change-right" :class="getChangeClass(record, 'sell')">
-                {{ getChangeText(record, 'sell') }}
               </div>
             </div>
             <div class="fund-item buy">
@@ -121,14 +124,16 @@
               <div class="fund-info">
                 <div class="fund-name">{{ record.buyName || record.buyCode }}</div>
                 <div class="fund-row">
-                  <span class="fund-code">{{ record.buyCode }}</span>
-                  <span class="fund-change-mobile" :class="getChangeClass(record, 'buy')">
+                  <div class="fund-left">
+                    <span class="fund-code">{{ record.buyCode }}</span>
+                    <span class="fund-day-change" :class="getDayChangeClass(record, 'buy')">
+                      {{ getDayChangeText(record, 'buy') }}
+                    </span>
+                  </div>
+                  <div class="fund-change-right" :class="getChangeClass(record, 'buy')">
                     {{ getChangeText(record, 'buy') }}
-                  </span>
+                  </div>
                 </div>
-              </div>
-              <div class="fund-change-right" :class="getChangeClass(record, 'buy')">
-                {{ getChangeText(record, 'buy') }}
               </div>
             </div>
           </div>
@@ -183,15 +188,35 @@
   </div>
 </template>
 
+<script lang="ts">
+export default {
+  name: 'ai-tracking'
+}
+</script>
+
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch, onActivated, onDeactivated } from 'vue'
 import { showToast, showLoadingToast, closeToast } from 'vant'
 import { useAITrackingStore, type AITrackingRecord } from '@/stores/aiTracking'
 import { fetchFundAccurateData, fetchNetValueHistoryFast } from '@/api/fundFast'
+import { useRouter } from 'vue-router'
 
 const aiTrackingStore = useAITrackingStore()
+const router = useRouter()
 
+// 使用响应式变量存储 UI 模式
 const uiMode = ref<'simple' | 'full'>('simple')
+
+// 切换 UI 模式
+function setUiMode(mode: 'simple' | 'full') {
+  uiMode.value = mode
+}
+
+// 重新加载数据（调试用）
+function reloadRecords() {
+  aiTrackingStore.reloadRecords()
+  showToast({ message: '数据已重新加载', duration: 1500 })
+}
 
 const records = computed(() => aiTrackingStore.records)
 
@@ -200,8 +225,8 @@ const successRate = computed(() => {
 
   let successCount = 0
   for (const record of records.value) {
-    const sellPrice = fundPrices.value[record.sellCode]
-    const buyPrice = fundPrices.value[record.buyCode]
+    const sellPrice = fundPrices.value[record.sellCode]?.value || 0
+    const buyPrice = fundPrices.value[record.buyCode]?.value || 0
 
     if (!sellPrice || !buyPrice || !record.sellNav || !record.buyNav) continue
 
@@ -222,8 +247,8 @@ const totalChange = computed(() => {
 
   let total = 0
   for (const record of records.value) {
-    const sellPrice = fundPrices.value[record.sellCode]
-    const buyPrice = fundPrices.value[record.buyCode]
+    const sellPrice = fundPrices.value[record.sellCode]?.value || 0
+    const buyPrice = fundPrices.value[record.buyCode]?.value || 0
 
     if (!sellPrice || !buyPrice || !record.sellNav || !record.buyNav) continue
 
@@ -507,14 +532,21 @@ function deleteRecord(id: string) {
 }
 
 function selectRecord(record: AITrackingRecord) {
-  // 可以跳转到详情页或者显示更多信息
+  const sellNameEnc = encodeURIComponent(record.sellName)
+  const buyNameEnc = encodeURIComponent(record.buyName)
+  const sellPrice = fundPrices.value[record.sellCode]?.value || 0
+  const buyPrice = fundPrices.value[record.buyCode]?.value || 0
+  // 使用接口返回的今日估值涨幅
+  const sellChange = fundPrices.value[record.sellCode]?.change || 0
+  const buyChange = fundPrices.value[record.buyCode]?.change || 0
+  router.push(`/ai-tracking/detail/${record.sellCode}/${sellNameEnc}/${record.buyCode}/${buyNameEnc}/${record.sellNav}/${record.buyNav}/${sellPrice}/${buyPrice}/${sellChange}/${buyChange}/${record.date}`)
 }
 
 function formatDate(dateStr: string) {
   return dateStr
 }
 
-const fundPrices = ref<Record<string, number>>({})
+const fundPrices = ref<Record<string, { value: number; change: number }>>({})
 const isRefreshing = ref(false)
 const autoRefreshEnabled = ref(false)
 let autoRefreshInterval: number | null = null
@@ -560,7 +592,10 @@ async function fetchCurrentPrices() {
   for (const code of codes) {
     try {
       const info = await fetchFundAccurateData(code)
-      fundPrices.value[code] = info?.currentValue || 0
+      fundPrices.value[code] = {
+        value: info?.currentValue || 0,
+        change: info?.dayChange || 0
+      }
     } catch (e) {
       console.error(`Failed to fetch price for ${code}:`, e)
     }
@@ -613,17 +648,35 @@ async function fetchCurrentPrices() {
 function getChangeText(record: AITrackingRecord, type: 'sell' | 'buy') {
   const code = type === 'sell' ? record.sellCode : record.buyCode
   const nav = type === 'sell' ? record.sellNav : record.buyNav
-  const currentPrice = fundPrices.value[code]
+  const currentPrice = fundPrices.value[code]?.value || 0
   
   if (!currentPrice || !nav) return '--'
   const change = ((currentPrice - nav) / nav) * 100
   return `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`
 }
 
+// 获取当日估值涨幅
+function getDayChangeText(record: AITrackingRecord, type: 'sell' | 'buy') {
+  const code = type === 'sell' ? record.sellCode : record.buyCode
+  const dayChange = fundPrices.value[code]?.change || 0
+  
+  if (!dayChange) return '--'
+  return `${dayChange >= 0 ? '+' : ''}${dayChange.toFixed(2)}%`
+}
+
+// 获取当日估值涨幅样式类
+function getDayChangeClass(record: AITrackingRecord, type: 'sell' | 'buy') {
+  const code = type === 'sell' ? record.sellCode : record.buyCode
+  const dayChange = fundPrices.value[code]?.change || 0
+  
+  if (!dayChange) return ''
+  return dayChange >= 0 ? 'up' : 'down'
+}
+
 function getCalcProcess(record: AITrackingRecord, type: 'sell' | 'buy') {
   const code = type === 'sell' ? record.sellCode : record.buyCode
   const nav = type === 'sell' ? record.sellNav : record.buyNav
-  const currentPrice = fundPrices.value[code]
+  const currentPrice = fundPrices.value[code]?.value || 0
   
   if (!currentPrice || !nav) return '--'
   const change = ((currentPrice - nav) / nav) * 100
@@ -642,8 +695,8 @@ function getCalcProcessCombined(record: AITrackingRecord) {
   const buyCode = record.buyCode
   const sellNav = record.sellNav
   const buyNav = record.buyNav
-  const sellPrice = fundPrices.value[sellCode]
-  const buyPrice = fundPrices.value[buyCode]
+  const sellPrice = fundPrices.value[sellCode]?.value || 0
+  const buyPrice = fundPrices.value[buyCode]?.value || 0
   
   if (!sellPrice || !buyPrice || !sellNav || !buyNav) return '--'
   
@@ -657,8 +710,8 @@ function getCalcProcessCombined(record: AITrackingRecord) {
 }
 
 function getStatusText(record: AITrackingRecord): string {
-  const sellPrice = fundPrices.value[record.sellCode]
-  const buyPrice = fundPrices.value[record.buyCode]
+  const sellPrice = fundPrices.value[record.sellCode]?.value || 0
+  const buyPrice = fundPrices.value[record.buyCode]?.value || 0
   
   if (!sellPrice || !buyPrice || !record.sellNav || !record.buyNav) return '--'
   
@@ -670,8 +723,8 @@ function getStatusText(record: AITrackingRecord): string {
 
 // [WHAT] 计算买入涨幅 - 卖出涨幅的差值
 function getDiffText(record: AITrackingRecord): string {
-  const sellPrice = fundPrices.value[record.sellCode]
-  const buyPrice = fundPrices.value[record.buyCode]
+  const sellPrice = fundPrices.value[record.sellCode]?.value || 0
+  const buyPrice = fundPrices.value[record.buyCode]?.value || 0
   
   if (!sellPrice || !buyPrice || !record.sellNav || !record.buyNav) return '--'
   
@@ -739,8 +792,8 @@ function handleDragEnd(event: DragEvent) {
 }
 
 function getStatusClass(record: AITrackingRecord): string {
-  const sellPrice = fundPrices.value[record.sellCode]
-  const buyPrice = fundPrices.value[record.buyCode]
+  const sellPrice = fundPrices.value[record.sellCode]?.value || 0
+  const buyPrice = fundPrices.value[record.buyCode]?.value || 0
   
   if (!sellPrice || !buyPrice || !record.sellNav || !record.buyNav) return ''
   
@@ -753,13 +806,30 @@ function getStatusClass(record: AITrackingRecord): string {
 function getChangeClass(record: AITrackingRecord, type: 'sell' | 'buy') {
   const code = type === 'sell' ? record.sellCode : record.buyCode
   const nav = type === 'sell' ? record.sellNav : record.buyNav
-  const currentPrice = fundPrices.value[code]
+  const currentPrice = fundPrices.value[code]?.value || 0
   
   if (!currentPrice || !nav) return ''
   return currentPrice > nav ? 'up' : 'down'
 }
 
-fetchCurrentPrices()
+// 页面挂载时加载数据（只执行一次，keep-alive会缓存组件）
+onMounted(() => {
+  fetchCurrentPrices()
+})
+
+// 页面激活时触发（包括第一次进入和从详情页返回）
+onActivated(() => {
+  // 从详情页返回时不做任何操作，依赖keep-alive缓存数据
+})
+
+// 页面停用时触发（离开页面）
+onDeactivated(() => {
+  // 清理自动刷新
+  if (autoRefreshInterval) {
+    clearInterval(autoRefreshInterval)
+    autoRefreshInterval = null
+  }
+})
 
 onUnmounted(() => {
   if (autoRefreshInterval) {
@@ -1236,6 +1306,12 @@ onUnmounted(() => {
   align-items: center;
 }
 
+.fund-left {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
 .fund-code {
   font-size: 10px;
   color: var(--text-muted);
@@ -1246,6 +1322,30 @@ onUnmounted(() => {
   font-weight: 500;
   font-family: var(--font-number);
   flex-shrink: 0;
+}
+
+.fund-change-mobile {
+  font-size: 11px;
+  font-weight: 500;
+  margin-left: 6px;
+}
+
+.fund-day-change {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 1px 4px;
+  border-radius: 3px;
+  margin-left: 6px;
+  
+  &.up {
+    color: var(--color-up);
+    background: rgba(238, 10, 36, 0.1);
+  }
+  
+  &.down {
+    color: var(--color-down);
+    background: rgba(7, 193, 96, 0.1);
+  }
 }
 
 .fund-change.up,
@@ -1312,7 +1412,15 @@ onUnmounted(() => {
 }
 
 .fund-change-right {
-  display: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  font-size: 14px;
+  font-weight: 600;
+  flex-shrink: 1;
+  min-width: 0;
+  max-width: 100px;
+  text-align: right;
 }
 
 .calc-process {

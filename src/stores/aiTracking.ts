@@ -17,6 +17,7 @@ export interface AITrackingRecord {
 
 export const useAITrackingStore = defineStore('aiTracking', () => {
   const records = ref<AITrackingRecord[]>([])
+  const uiMode = ref<'simple' | 'full'>('simple')
 
   const recordCount = computed(() => records.value.length)
 
@@ -67,12 +68,26 @@ export const useAITrackingStore = defineStore('aiTracking', () => {
     const data = localStorage.getItem('ai-tracking-records')
     if (data) {
       try {
-        records.value = JSON.parse(data)
+        const parsed = JSON.parse(data)
+        // 为没有id的旧数据生成id
+        records.value = parsed.map((record: any, index: number) => ({
+          ...record,
+          id: record.id || Date.now().toString() + index,
+          createdAt: record.createdAt || new Date().toISOString()
+        }))
       } catch (e) {
         console.error('Failed to load AI tracking records:', e)
         records.value = []
       }
     }
+  }
+
+  function reloadRecords() {
+    loadFromLocalStorage()
+  }
+
+  function setUiMode(mode: 'simple' | 'full') {
+    uiMode.value = mode
   }
 
   function importRecords(importedRecords: AITrackingRecord[]) {
@@ -104,6 +119,7 @@ export const useAITrackingStore = defineStore('aiTracking', () => {
   return {
     records,
     recordCount,
+    uiMode,
     addRecord,
     removeRecord,
     updateRecordNav,
@@ -111,6 +127,8 @@ export const useAITrackingStore = defineStore('aiTracking', () => {
     importRecords,
     clearAll,
     reorderRecords,
-    loadFromLocalStorage
+    loadFromLocalStorage,
+    reloadRecords,
+    setUiMode
   }
 })
